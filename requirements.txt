@@ -1,4 +1,4 @@
 flask
 cryptography
-requests
 gunicorn
+requests
