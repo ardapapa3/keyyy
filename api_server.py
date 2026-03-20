@@ -174,40 +174,47 @@ def list_keys():
 
 
 # ── ENDPOINT 4: İptal et ──────────────────────────────────────────────────────
+# ── ENDPOINT 4: İptal et ──────────────────────────────────────────────────────
 @app.route("/revoke", methods=["POST"])
 def revoke():
     if not check_api_secret(request):
         return jsonify({"error": "Yetkisiz erişim."}), 403
-
     data   = request.get_json(force=True, silent=True) or {}
     row_id = data.get("id")
-    if row_id is None:
-        return jsonify({"error": "id gerekli."}), 400
-
+    key    = str(data.get("key", "")).strip().upper()
     conn = sqlite3.connect(DB_FILE)
-    conn.execute("UPDATE licenses SET is_active=0 WHERE id=?", (row_id,))
+    if row_id is not None:
+        conn.execute("UPDATE licenses SET is_active=0 WHERE id=?", (row_id,))
+    elif key:
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        conn.execute("UPDATE licenses SET is_active=0 WHERE key_hash=?", (key_hash,))
+    else:
+        conn.close()
+        return jsonify({"error": "id veya key gerekli."}), 400
     conn.commit()
     conn.close()
-    return jsonify({"ok": True, "message": f"#{row_id} iptal edildi."})
-
+    return jsonify({"ok": True, "message": "Iptal edildi."})
 
 # ── ENDPOINT 5: Aktif et ──────────────────────────────────────────────────────
 @app.route("/activate", methods=["POST"])
 def activate():
     if not check_api_secret(request):
         return jsonify({"error": "Yetkisiz erişim."}), 403
-
     data   = request.get_json(force=True, silent=True) or {}
     row_id = data.get("id")
-    if row_id is None:
-        return jsonify({"error": "id gerekli."}), 400
-
+    key    = str(data.get("key", "")).strip().upper()
     conn = sqlite3.connect(DB_FILE)
-    conn.execute("UPDATE licenses SET is_active=1 WHERE id=?", (row_id,))
+    if row_id is not None:
+        conn.execute("UPDATE licenses SET is_active=1 WHERE id=?", (row_id,))
+    elif key:
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+        conn.execute("UPDATE licenses SET is_active=1 WHERE key_hash=?", (key_hash,))
+    else:
+        conn.close()
+        return jsonify({"error": "id veya key gerekli."}), 400
     conn.commit()
     conn.close()
-    return jsonify({"ok": True, "message": f"#{row_id} aktif edildi."})
-
+    return jsonify({"ok": True, "message": "Aktif edildi."})
 
 # ── ENDPOINT 6: Sil ───────────────────────────────────────────────────────────
 @app.route("/delete", methods=["POST"])
