@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İyi ki Doğdun</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --green:#3ddc84;
+    --white:#f5f5f5;
+  }
+  html,body{
+    margin:0;padding:0;
+    width:100%;
+    background:var(--bg);
+    font-family:'Segoe UI',Verdana,sans-serif;
+  }
+  .stage{
+    position:relative;
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:6vh 0 8vh 0;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+
+  /* ---------- Fireworks ---------- */
+  #fireworks{
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    z-index:1;
+  }
+
+  /* ---------- Balloons (only in side margins, never over the cake) ---------- */
+  .balloon{
+    position:absolute;
+    bottom:-40px;
+    width:64px;
+    height:84px;
+    z-index:2;
+    opacity:0;
+  }
+  .balloon svg{ width:100%; height:100%; display:block; }
+  .balloon .string{
+    stroke:rgba(255,255,255,0.35);
+    stroke-width:1.5;
+    fill:none;
+  }
+
+  .b1{ left:2%;  animation:rise1 13s ease-in-out infinite; animation-delay:0s;   }
+  .b2{ left:9%;  animation:rise2 15s ease-in-out infinite; animation-delay:3s;   }
+  .b3{ left:89%; animation:rise3 14s ease-in-out infinite; animation-delay:1.5s; }
+  .b4{ left:95%; animation:rise1 16s ease-in-out infinite; animation-delay:5s;   }
+  .b5{ left:4%;  animation:rise2 12s ease-in-out infinite; animation-delay:7s;   }
+
+  /* realistic wind-like drift: not linear, wobble left/right as it climbs */
+  @keyframes rise1{
+    0%   { transform:translate(0,0) rotate(0deg); opacity:0; }
+    6%   { opacity:0.9; }
+    25%  { transform:translate(10px,-25vh) rotate(4deg); }
+    50%  { transform:translate(-8px,-50vh) rotate(-3deg); }
+    75%  { transform:translate(12px,-75vh) rotate(3deg); }
+    92%  { opacity:0.2; }
+    100% { transform:translate(-6px,-105vh) rotate(-2deg); opacity:0; }
+  }
+  @keyframes rise2{
+    0%   { transform:translate(0,0) rotate(0deg); opacity:0; }
+    6%   { opacity:0.85; }
+    30%  { transform:translate(-14px,-30vh) rotate(-5deg); }
+    55%  { transform:translate(9px,-55vh) rotate(2deg); }
+    80%  { transform:translate(-10px,-80vh) rotate(-4deg); }
+    92%  { opacity:0.2; }
+    100% { transform:translate(8px,-105vh) rotate(3deg); opacity:0; }
+  }
+  @keyframes rise3{
+    0%   { transform:translate(0,0) rotate(0deg); opacity:0; }
+    6%   { opacity:0.9; }
+    28%  { transform:translate(-11px,-28vh) rotate(-4deg); }
+    52%  { transform:translate(13px,-52vh) rotate(4deg); }
+    78%  { transform:translate(-9px,-78vh) rotate(-3deg); }
+    92%  { opacity:0.2; }
+    100% { transform:translate(7px,-105vh) rotate(2deg); opacity:0; }
+  }
+
+  /* balloon color cycle - slowly change one at a time */
+  .balloon path.body{ animation:colorShift 14s linear infinite; }
+  .b1 path.body{ animation-delay:0s;   }
+  .b2 path.body{ animation-delay:2.8s; }
+  .b3 path.body{ animation-delay:5.6s; }
+  .b4 path.body{ animation-delay:8.4s; }
+  .b5 path.body{ animation-delay:11.2s;}
+
+  @keyframes colorShift{
+    0%   { fill:#ff5c8a; }
+    20%  { fill:#5cc9ff; }
+    40%  { fill:#ffe45c; }
+    60%  { fill:#7cff5c; }
+    80%  { fill:#c25cff; }
+    100% { fill:#ff5c8a; }
+  }
+
+  /* ---------- Text ---------- */
+  .title{
+    position:relative;
+    z-index:3;
+    text-align:center;
+    color:var(--green);
+    font-size:1.5rem;
+    letter-spacing:2px;
+    text-shadow:0 0 8px var(--green), 0 0 18px var(--green);
+    opacity:0;
+    animation:fadeIn 1.5s ease forwards;
+    animation-delay:0.3s;
+    margin:0 0 10px 0;
+    padding:0 10px;
+  }
+
+  .cake-wrap{
+    position:relative;
+    z-index:3;
+    width:min(74vw,380px);
+    margin-top:6px;
+  }
+
+  .happy{
+    position:relative; z-index:3;
+    color:var(--white); font-size:3rem; font-weight:300;
+    margin:6px 0 0 0; opacity:0;
+    animation:fadeIn 1.2s ease forwards; animation-delay:2.6s;
+  }
+  .age{
+    position:relative; z-index:3;
+    color:var(--green); font-size:5rem; font-weight:800; margin:0;
+    text-shadow:0 0 10px var(--green), 0 0 30px var(--green);
+    opacity:0;
+    animation:fadeIn 1.2s ease forwards; animation-delay:3s;
+  }
+  .bday{
+    position:relative; z-index:3;
+    color:var(--white); font-size:3rem; font-weight:700; margin:0;
+    opacity:0;
+    animation:fadeIn 1.2s ease forwards; animation-delay:3.4s;
+  }
+
+  @keyframes fadeIn{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  /* ---------- Cake draw-in ---------- */
+  .cake-path{
+    fill:none;
+    stroke:var(--green);
+    stroke-width:3;
+    stroke-linejoin:round;
+    stroke-linecap:round;
+    stroke-dasharray:2600;
+    stroke-dashoffset:2600;
+    animation:draw 4.2s ease forwards;
+    animation-delay:0.6s;
+  }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+
+  /* candles: fixed, steady flame, no sway/flicker */
+  .flame{
+    fill:#ffb03b;
+    opacity:0;
+    animation:flameIn 0.6s ease forwards;
+    animation-delay:4.7s;
+  }
+  .cake-wrap .flame:nth-of-type(1){animation-delay:4.7s;}
+  .cake-wrap .flame:nth-of-type(2){animation-delay:5.1s;}
+  .cake-wrap .flame:nth-of-type(3){animation-delay:5.5s;}
+  .cake-wrap .flame:nth-of-type(4){animation-delay:5.9s;}
+  @keyframes flameIn{ to{ opacity:1; } }
+
+  /* ---------- Message / Gift section ---------- */
+  .actions{
+    position:relative; z-index:3;
+    display:flex;
+    gap:16px;
+    margin-top:26px;
+    opacity:0;
+    animation:fadeIn 1.2s ease forwards;
+    animation-delay:4.4s;
+    flex-wrap:wrap;
+    justify-content:center;
+    padding:0 16px;
+  }
+  .action-btn{
+    background:transparent;
+    border:2px solid var(--green);
+    color:var(--green);
+    padding:10px 22px;
+    font-size:1rem;
+    border-radius:30px;
+    cursor:pointer;
+    letter-spacing:0.5px;
+    transition:background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .action-btn:hover{
+    background:var(--green);
+    color:#0d1117;
+    box-shadow:0 0 16px var(--green);
+  }
+
+  .reveal-panel{
+    position:relative; z-index:3;
+    width:min(85vw,420px);
+    margin-top:18px;
+    text-align:center;
+    color:var(--white);
+    font-size:1.05rem;
+    line-height:1.6;
+    background:rgba(61,220,132,0.06);
+    border:1px solid rgba(61,220,132,0.4);
+    border-radius:14px;
+    padding:18px 20px;
+    box-sizing:border-box;
+    display:none;
+    opacity:0;
+  }
+  .reveal-panel.show{
+    display:block;
+    animation:fadeIn 0.8s ease forwards;
+  }
+
+  .wink-face{
+    width:130px;
+    margin:16px auto 0 auto;
+    display:block;
+  }
+  .wink-path{
+    fill:none;
+    stroke:var(--green);
+    stroke-width:3;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    stroke-dasharray:400;
+    stroke-dashoffset:400;
+    opacity:0;
+  }
+  .wink-path.draw{
+    animation:winkDraw 2.4s ease forwards;
+  }
+  @keyframes winkDraw{
+    0%{ opacity:0; stroke-dashoffset:400; }
+    15%{ opacity:1; }
+    100%{ opacity:1; stroke-dashoffset:0; }
+  }
+
+  /* ---------- Secret button + heart canvas ---------- */
+  .arda-bot-btn{
+    position:relative;
+    z-index:3;
+    margin-top:18px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:linear-gradient(135deg, rgba(61,220,132,0.10), rgba(92,201,255,0.10));
+    border:1.5px solid var(--green);
+    color:var(--green);
+    font-size:0.95rem;
+    font-weight:600;
+    letter-spacing:0.4px;
+    padding:10px 24px;
+    border-radius:26px;
+    cursor:pointer;
+    box-shadow:0 0 12px rgba(61,220,132,0.25);
+    transition:transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+  }
+  .arda-bot-btn:hover{
+    transform:translateY(-2px);
+    background:linear-gradient(135deg, rgba(61,220,132,0.9), rgba(92,201,255,0.7));
+    color:#0d1117;
+    box-shadow:0 0 22px rgba(61,220,132,0.55);
+  }
+  .arda-bot-btn .bot-icon{
+    font-size:1.15rem;
+    display:inline-block;
+    animation: botPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes botPulse{
+    0%,100%{ transform:scale(1) rotate(0deg); }
+    50%{ transform:scale(1.15) rotate(-4deg); }
+  }
+
+  .secret-btn{
+    position:relative; z-index:3;
+    margin-top:22px;
+    background:none;
+    border:none;
+    color:#ff78b7;
+    font-size:0.8rem;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    padding:6px 10px;
+    transition:color 0.3s ease;
+  }
+  .secret-btn:hover{
+    color:#ffb3d5;
+  }
+
+  .heart-panel{
+    position:relative; z-index:3;
+    margin-top:10px;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+  }
+  .heart-panel.show{ display:flex; }
+  #heartCanvas{
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,79,163,0.12), transparent 58%),
+      #000;
+    border-radius:22px;
+    border:1px solid rgba(255,79,163,0.35);
+    box-shadow:
+      0 0 18px rgba(255,79,163,0.25),
+      0 0 55px rgba(255,79,163,0.12),
+      inset 0 0 30px rgba(255,79,163,0.05);
+  }
+
+  .heart-panel{
+    animation: heartReveal 1.2s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  @keyframes heartReveal{
+    from{opacity:0; transform:translateY(18px) scale(.82); filter:blur(8px);}
+    to{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+
+
+  .secret-balloon{position:absolute;z-index:4;font-size:34px;opacity:0;pointer-events:none;animation:secretFloat 5.8s cubic-bezier(.22,.61,.36,1) forwards;filter:drop-shadow(0 0 5px currentColor);}
+  @keyframes secretFloat{
+    0%{transform:translate3d(0,30px,0) scale(.65) rotate(0deg);opacity:0;}
+    8%{opacity:1;}
+    35%{transform:translate3d(22px,-32vh,0) scale(.95) rotate(8deg);}
+    65%{transform:translate3d(-28px,-68vh,0) scale(.9) rotate(-10deg);}
+    88%{opacity:.65;}
+    100%{transform:translate3d(35px,-115vh,0) scale(.75) rotate(6deg);opacity:0;}
+  }
+  @media (max-width:420px){
+    .title{ font-size:1.1rem; }
+    .happy{ font-size:2.2rem; }
+    .age{ font-size:3.6rem; }
+    .bday{ font-size:2.2rem; }
+    .action-btn{ font-size:0.9rem; padding:9px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <canvas id="fireworks"></canvas>
+
+  <div class="balloon b1"><svg viewBox="0 0 70 110"><line class="string" x1="35" y1="70" x2="35" y2="108"/><path class="body" fill="#ff5c8a" d="M35 5 C10 5 5 35 12 55 C17 68 27 72 30 78 C31 80 33 80 34 78 C34 78 30 68 35 68 C40 68 36 78 36 78 C37 80 39 80 40 78 C43 72 53 68 58 55 C65 35 60 5 35 5 Z"/></svg></div>
+  <div class="balloon b2"><svg viewBox="0 0 70 110"><line class="string" x1="35" y1="70" x2="35" y2="108"/><path class="body" fill="#5cc9ff" d="M35 5 C10 5 5 35 12 55 C17 68 27 72 30 78 C31 80 33 80 34 78 C34 78 30 68 35 68 C40 68 36 78 36 78 C37 80 39 80 40 78 C43 72 53 68 58 55 C65 35 60 5 35 5 Z"/></svg></div>
+  <div class="balloon b3"><svg viewBox="0 0 70 110"><line class="string" x1="35" y1="70" x2="35" y2="108"/><path class="body" fill="#ffe45c" d="M35 5 C10 5 5 35 12 55 C17 68 27 72 30 78 C31 80 33 80 34 78 C34 78 30 68 35 68 C40 68 36 78 36 78 C37 80 39 80 40 78 C43 72 53 68 58 55 C65 35 60 5 35 5 Z"/></svg></div>
+  <div class="balloon b4"><svg viewBox="0 0 70 110"><line class="string" x1="35" y1="70" x2="35" y2="108"/><path class="body" fill="#c25cff" d="M35 5 C10 5 5 35 12 55 C17 68 27 72 30 78 C31 80 33 80 34 78 C34 78 30 68 35 68 C40 68 36 78 36 78 C37 80 39 80 40 78 C43 72 53 68 58 55 C65 35 60 5 35 5 Z"/></svg></div>
+  <div class="balloon b5"><svg viewBox="0 0 70 110"><line class="string" x1="35" y1="70" x2="35" y2="108"/><path class="body" fill="#7cff5c" d="M35 5 C10 5 5 35 12 55 C17 68 27 72 30 78 C31 80 33 80 34 78 C34 78 30 68 35 68 C40 68 36 78 36 78 C37 80 39 80 40 78 C43 72 53 68 58 55 C65 35 60 5 35 5 Z"/></svg></div>
+
+  <p class="title">GÜLÇİN BABA İÇİN</p>
+
+  <div class="cake-wrap">
+    <svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- Flames (fixed, steady) -->
+      <path class="flame" d="M95 55 C90 65 90 72 95 76 C100 72 100 65 95 55 Z"/>
+      <path class="flame" d="M130 50 C125 60 125 67 130 71 C135 67 135 60 130 50 Z"/>
+      <path class="flame" d="M165 50 C160 60 160 67 165 71 C170 67 170 60 165 50 Z"/>
+      <path class="flame" d="M200 55 C195 65 195 72 200 76 C205 72 205 65 200 55 Z"/>
+
+      <!-- Candles -->
+      <path class="cake-path" d="M92 78 L92 100 L98 100 L98 78 Z"/>
+      <path class="cake-path" d="M127 73 L127 100 L133 100 L133 73 Z"/>
+      <path class="cake-path" d="M162 73 L162 100 L168 100 L168 73 Z"/>
+      <path class="cake-path" d="M197 78 L197 100 L203 100 L203 78 Z"/>
+
+      <!-- Top tier -->
+      <path class="cake-path" d="M85 100
+        L215 100
+        L215 150
+        C215 150 205 156 150 156
+        C95 156 85 150 85 150
+        Z"/>
+      <path class="cake-path" d="M85 100 C85 106 95 112 150 112 C205 112 215 106 215 100"/>
+      <path class="cake-path" d="M95 128 C110 124 120 132 132 128 C144 124 156 132 168 128 C180 124 192 132 205 128"/>
+
+      <!-- Bottom tier -->
+      <path class="cake-path" d="M50 156
+        L250 156
+        L250 200
+        C250 200 220 210 150 210
+        C80 210 50 200 50 200
+        Z"/>
+      <path class="cake-path" d="M50 156 C50 164 80 172 150 172 C220 172 250 164 250 156"/>
+      <path class="cake-path" d="M62 186 C80 182 95 190 110 186 C125 182 140 190 155 186 C170 182 185 190 200 186 C215 182 228 190 238 186"/>
+
+      <!-- Plate -->
+      <path class="cake-path" d="M35 210 C35 216 85 220 150 220 C215 220 265 216 265 210"/>
+    </svg>
+  </div>
+
+  <p class="happy">Happy</p>
+  <p class="age">17th</p>
+  <p class="bday">Birthday!</p>
+
+  <div class="actions">
+    <button class="action-btn" onclick="toggleMessage()">Mesaj Gör</button>
+    <button class="action-btn" onclick="toggleGift()">Hediye Gör</button>
+  </div>
+
+  <div class="reveal-panel" id="messagePanel">
+    Gülçin, doğum günün kutlu olsun! Bugün senin için: dileklerin gerçek olsun,
+    gülüşün hiç eksilmesin ve umarım mutlu bir yıl daha geçirirsin!🌹
+  </div>
+
+  <div class="reveal-panel" id="giftPanel">
+    <span>Hediyeniz yarın elinizde.</span>
+    <svg class="wink-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle class="wink-path" id="wf1" cx="50" cy="50" r="38"/>
+      <path class="wink-path" id="wf2" d="M30 45 a6 6 0 0 1 12 0"/>
+      <path class="wink-path" id="wf3" d="M62 48 L74 48"/>
+      <path class="wink-path" id="wf4" d="M32 62 C40 74 60 74 68 62"/>
+    </svg>
+  </div>
+
+  <button class="secret-btn" onclick="toggleSecret()">gizli buton</button>
+
+  <div class="heart-panel" id="heartPanel">
+    <canvas id="heartCanvas" width="280" height="280"></canvas>
+  </div>
+
+  <button class="arda-bot-btn" id="ardaBotBtn" onclick="toggleArdaBot()">
+    <span class="bot-icon">🤖</span> Arda Bot
+  </button>
+
+  <div class="reveal-panel" id="ardaBotPanel">
+    <div id="chatLog" style="max-height:280px;overflow-y:auto;text-align:left;margin-bottom:12px;padding-right:4px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input id="chatInput" type="text" placeholder="Bir şey yaz..." autocomplete="off"
+        style="flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid rgba(61,220,132,0.5);background:#0d1117;color:#f5f5f5;font-size:0.95rem;outline:none;">
+      <button class="action-btn" style="padding:10px 16px;" onclick="sendArdaMessage()">Gönder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= FIREWORKS ================= */
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = document.body.scrollHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const colors = ['#ff5c8a','#5cc9ff','#ffe45c','#7cff5c','#c25cff','#3ddc84','#ffffff'];
+let particles = [];
+let rockets = [];
+
+function spawnRocket(){
+  const startX = Math.random()*canvas.width;
+  const targetY = canvas.height*0.12 + Math.random()*canvas.height*0.3;
+  rockets.push({
+    x:startX,
+    y:canvas.height + 10,
+    targetY:targetY,
+    speed:4 + Math.random()*2,
+    color: colors[Math.floor(Math.random()*colors.length)]
+  });
+}
+
+function explode(x,y,color){
+  const count = 40 + Math.floor(Math.random()*20);
+  for(let i=0;i<count;i++){
+    const angle = (Math.PI*2*i)/count;
+    const speed = 1.5 + Math.random()*2.5;
+    particles.push({ x:x, y:y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, alpha:1, color:color });
+  }
+}
+
+function loop(){
+  ctx.fillStyle = 'rgba(13,17,23,0.25)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let i=rockets.length-1;i>=0;i--){
+    const r = rockets[i];
+    r.y -= r.speed;
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, 2, 0, Math.PI*2);
+    ctx.fillStyle = r.color;
+    ctx.fill();
+    if(r.y <= r.targetY){
+      explode(r.x, r.y, r.color);
+      rockets.splice(i,1);
+    }
+  }
+
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.03;
+    p.alpha -= 0.014;
+    if(p.alpha <= 0){ particles.splice(i,1); continue; }
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 1.8, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  requestAnimationFrame(loop);
+}
+loop();
+
+setInterval(()=>{ if(Math.random() < 0.8) spawnRocket(); }, 1400);
+setTimeout(spawnRocket, 800);
+setTimeout(spawnRocket, 1600);
+
+/* ================= MESSAGE / GIFT PANELS ================= */
+function toggleMessage(){
+  const panel = document.getElementById('messagePanel');
+  const giftPanel = document.getElementById('giftPanel');
+  const ardaPanel = document.getElementById('ardaBotPanel');
+  giftPanel.classList.remove('show');
+  if(ardaPanel) ardaPanel.classList.remove('show');
+  panel.classList.toggle('show');
+}
+
+function toggleGift(){
+  const panel = document.getElementById('giftPanel');
+  const messagePanel = document.getElementById('messagePanel');
+  const ardaPanel = document.getElementById('ardaBotPanel');
+  messagePanel.classList.remove('show');
+  if(ardaPanel) ardaPanel.classList.remove('show');
+  const willShow = !panel.classList.contains('show');
+  panel.classList.toggle('show');
+
+  if(willShow){
+    const parts = ['wf1','wf2','wf3','wf4'];
+    parts.forEach((id, idx)=>{
+      const el = document.getElementById(id);
+      el.classList.remove('draw');
+      void el.offsetWidth; /* restart animation */
+      setTimeout(()=>{ el.classList.add('draw'); }, 300 + idx*350);
+    });
+  }
+}
+
+/* ================= SECRET BUTTON: TURTLE-STYLE HEART ================= */
+const heartCanvas = document.getElementById('heartCanvas');
+const hctx = heartCanvas.getContext('2d');
+const heartColors = ['#ff4fa3'];
+
+let heartTimer = null;
+let heartIndex = 0;
+const HEART_POINTS = 120;
+
+// parametric heart curve, same shape as the python turtle formula
+function heartPoint(t){
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+  return {x, y};
+}
+
+function toggleSecret(){
+  const panel = document.getElementById('heartPanel');
+  const willShow = !panel.classList.contains('show');
+  panel.classList.toggle('show');
+
+  if(willShow){
+    startHeartDrawing();
+  } else {
+    stopHeartDrawing();
+  }
+}
+
+function stopHeartDrawing(){
+  if(heartTimer){ clearInterval(heartTimer); heartTimer = null; }
+}
+
+function startHeartDrawing(){
+  stopHeartDrawing();
+  hctx.clearRect(0,0,heartCanvas.width,heartCanvas.height);
+  heartIndex = 0;
+
+  const cx = heartCanvas.width/2;
+  const cy = heartCanvas.height/2;
+  const S = 7;                 // scale factor for the curve
+  const originX = cx;
+  const originY = cy - (40/15)*S;  // matches turtle's t.goto(0,40) origin point
+
+  heartTimer = setInterval(()=>{
+    if(heartIndex >= HEART_POINTS){
+      stopHeartDrawing();
+      return;
+    }
+    const angle = heartIndex * (Math.PI*2 / HEART_POINTS);
+    const p = heartPoint(angle);
+    const px = cx + p.x*S;
+    const py = cy - p.y*S;
+    const color = heartColors[Math.floor(Math.random()*heartColors.length)];
+
+    // main ray from the origin point to the curve point
+    hctx.strokeStyle = color;
+    hctx.lineWidth = 1;
+    hctx.beginPath();
+    hctx.moveTo(originX, originY);
+    hctx.lineTo(px, py);
+    hctx.stroke();
+
+    // small 8-point burst at the tip (like the turtle's forward/backward/right45 loop)
+    const burstLen = 5;
+    for(let k=0;k<8;k++){
+      const a = k * (Math.PI/4);
+      hctx.beginPath();
+      hctx.moveTo(px, py);
+      hctx.lineTo(px + Math.cos(a)*burstLen, py + Math.sin(a)*burstLen);
+      hctx.stroke();
+    }
+    hctx.shadowBlur = 0;
+
+    heartIndex++;
+  }, 75); // daha yavaş, tek tek belirsin
+}
+
+/* ================= ARDA BOT (Groq API) ================= */
+const GROQ_API_KEY = "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";
+const GROQ_MODEL = "openai/gpt-oss-120b";
+
+const ARDA_SYSTEM_PROMPT = `Senin adın Arda Bot. Bir doğum günü sitesinde ziyaretçilerle sohbet ediyorsun.
+Kurallar:
+- "Seni kim yaptı?" tarzı bir soru gelirse: "Ben Arda Gökçe tarafından yapılmış bir yapay zeka botuyum." de.
+- "Bu site ne?" tarzı bir soru gelirse: "Bu site Gülçin Baritçioğlu için yapılmış özel bir doğum günü sitesi." de.
+- "Siteyi kim yaptı?" tarzı bir soru gelirse: "Arda Gökçe." de.
+- Bunların dışında gelen normal/klasik sorulara (genel bilgi, sohbet, tarih, matematik vs.) da olabildiğince doğru ve kısa şekilde cevap ver.
+- Cevaplarında imza veya "-Arda Bot" ekleme, bunu sistem otomatik olarak ekleyecek.
+- Kısa, samimi ve doğal bir dille (Türkçe) yanıt ver.`;
+
+let ardaChatHistory = [];
+
+function toggleArdaBot(){
+  const panel = document.getElementById('ardaBotPanel');
+  const messagePanel = document.getElementById('messagePanel');
+  const giftPanel = document.getElementById('giftPanel');
+  messagePanel.classList.remove('show');
+  giftPanel.classList.remove('show');
+  panel.classList.toggle('show');
+  if(panel.classList.contains('show')){
+    document.getElementById('chatInput').focus();
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function appendChatLine(html){
+  const log = document.getElementById('chatLog');
+  log.insertAdjacentHTML('beforeend', html);
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById('chatInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ sendArdaMessage(); }
+});
+
+async function sendArdaMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+
+  appendChatLine(`<div style="margin-bottom:10px;"><b style="color:#fff;">Sen:</b> ${escapeHtml(text)}</div>`);
+  ardaChatHistory.push({role:"user", content:text});
+
+  appendChatLine(`<div id="ardaLoading" style="opacity:0.6;font-size:0.9rem;">Arda Bot yazıyor...</div>`);
+
+  try{
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + GROQ_API_KEY
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {role:"system", content: ARDA_SYSTEM_PROMPT},
+          ...ardaChatHistory
+        ]
+      })
+    });
+
+    const data = await res.json();
+    const loadingEl = document.getElementById('ardaLoading');
+    if(loadingEl) loadingEl.remove();
+
+    if(!res.ok){
+      const apiErr = (data && data.error && data.error.message) ? data.error.message : ("HTTP " + res.status);
+      appendChatLine(`<div style="margin-bottom:10px;color:#ff8a8a;">API hatası: ${escapeHtml(apiErr)}<br><span style="color:#3ddc84;font-size:0.85rem;">-Arda Bot</span></div>`);
+      return;
+    }
+
+    let reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+      ? data.choices[0].message.content.trim()
+      : "Şu an cevap veremedim, birazdan tekrar dener misin?";
+
+    ardaChatHistory.push({role:"assistant", content:reply});
+
+    appendChatLine(`<div style="margin-bottom:10px;white-space:pre-wrap;">${escapeHtml(reply)}<br><span style="color:#3ddc84;font-size:0.85rem;">-Arda Bot</span></div>`);
+  }catch(err){
+    const loadingEl = document.getElementById('ardaLoading');
+    if(loadingEl) loadingEl.remove();
+    appendChatLine(`<div style="margin-bottom:10px;color:#ff8a8a;">Bağlantı hatası: ${escapeHtml(err.message || String(err))}<br><span style="color:#3ddc84;font-size:0.85rem;">-Arda Bot</span></div>`);
+  }
+}
+</script>
+
+</body>
+</html>
